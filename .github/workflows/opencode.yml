@@ -1,0 +1,57 @@
+name: opencode
+
+# Comment `/oc-openai <task>` to run OpenCode with OpenAI directly, or
+# `/oc-zen <task>` to run it with OpenCode Zen. Only repository
+# owners, members and collaborators can trigger a run.
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  opencode-openai:
+    if: |
+      contains(github.event.comment.body, '/oc-openai') &&
+      !contains(github.event.comment.body, '/oc-zen') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Run OpenCode (OpenAI)
+        uses: anomalyco/opencode/github@latest
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        with:
+          model: openai/gpt-5.1-codex
+          mentions: /oc-openai
+
+  opencode-zen:
+    if: |
+      contains(github.event.comment.body, '/oc-zen') &&
+      !contains(github.event.comment.body, '/oc-openai') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Run OpenCode (Zen)
+        uses: anomalyco/opencode/github@latest
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        with:
+          model: opencode/gpt-5.1-codex
+          mentions: /oc-zen
